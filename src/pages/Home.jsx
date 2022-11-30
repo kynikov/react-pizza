@@ -1,32 +1,34 @@
 import React from "react";
 import axios from 'axios';
 import { useSelector, useDispatch } from "react-redux";
-
+import { useNavigate } from "react-router-dom";
 import { setCategoryId, setCurrentPage } from '../redux/slices/filterSlice';
 import Categories from "../components/Categories";
 import Sort from "../components/Sort";
 import PizzaBlock from "../components/PizzaBlock";
 import Skeleton from "../components/PizzaBlock/Skeleton";
 import Pagination from "../components/Pagination";
-
+import qs from 'qs';
 import { SearchContext } from '../App';
 
 const Home = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
+  //const isMounted = React.useRef(false);
   const {categoryId, sort, currentPage } = useSelector(state => state.filter);
+
   const { searchValue } = React.useContext(SearchContext);
   const [items, setItems] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
-
-  const onChangePage = number => {
-    dispatch(setCurrentPage(number))
-  }
-
   const onChangeCategory = (id) => {
     dispatch(setCategoryId(id));
+  };  
+
+  const onChangePage = number => {
+    dispatch(setCurrentPage(number));
   };
-;
+
   React.useEffect(() => {
     setIsLoading(true);
 
@@ -46,6 +48,27 @@ const Home = () => {
     window.scrollTo(0, 0);
   }, [categoryId, sort.sortProperty, searchValue, currentPage]);
 
+  React.useEffect(() => {
+    const queryString = qs.stringify({
+      sortProperty: sort.sortProperty,
+      categoryId,
+      currentPage,
+    })
+    navigate(`?${queryString}`);
+  }, [categoryId, sort.sortProperty, searchValue, currentPage])
+
+  //React.useEffect(() => {
+  //  if (window.location.search) {
+  //    const params = qs.parse(window.location.search.substring(1));
+  //    const sort = sortList.find((obj) => obj.sortProperty === params.sortProperty)
+  //    if (sort) {
+  //      params.sort = sort;
+  //    }
+  //    dispatch(setFilters(params));
+
+  //    isMounted.current = true;
+  //  }
+  //}, []);
   const pizzas = items
     .filter((obj) => {
       if (obj.title.toLowerCase().includes(searchValue)) {
@@ -55,7 +78,7 @@ const Home = () => {
     })
     .map((obj) => (
       <PizzaBlock
-        key={obj}
+        key={obj.id}
         title={obj.title}
         price={obj.price}
         imgUrl={obj.imageUrl}
